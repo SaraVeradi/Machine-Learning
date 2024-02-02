@@ -149,3 +149,64 @@ attributes = ["median_house_value", "median_income", "total_rooms",
               "housing_median_age"]
 scatter_matrix(housing[attributes], figsize=(12, 8))
 plt.show()
+
+
+#%% ===========================================================================
+# Experiment with Attribute Combinations
+# =============================================================================
+
+# What you really want is the number of rooms per household. Similarly,
+# the total number of bedrooms by itself is not very useful: you probably want to
+# compare it to the number of rooms. And the population per household also seems
+# like an interesting attribute combination to look at. 
+
+housing["rooms_per_house"]  = housing["total_rooms"]    / housing["households"]
+housing["bedrooms_ratio"]   = housing["total_bedrooms"] / housing["total_rooms"]
+housing["people_per_house"] = housing["population"]     / housing["households"]
+
+corr_matrix = housing.corr()
+print(corr_matrix["median_house_value"].sort_values(ascending=False))
+
+
+#%% ===========================================================================
+# Prepare the Data for Machine Learning Algorithms
+# =============================================================================
+
+# But first, revert to a clean training set (by copying strat_train_set once again). You
+# should also separate the predictors and the labels, since you don’t necessarily want
+# to apply the same transformations to the predictors and the target values (note that
+# drop() creates a copy of the data and does not affect strat_train_set):
+
+housing = strat_train_set.drop("median_house_value", axis=1)
+housing_labels = strat_train_set["median_house_value"].copy()
+
+
+#%% ===========================================================================
+# Clean the Data : you noticed earlier that the total_bedrooms
+# attribute has some missing values.
+# =============================================================================
+# With respect to missing data
+# 1. set rid of the corresponding districts.
+# 2. Get rid of the whole attribute.
+# 3. set the missing values to some value (zero, the mean, the median, etc.). This is3.
+# called imputation.
+
+housing.dropna(subset=["total_bedrooms"], inplace=True) # option 1 : function to Remove missing values.
+
+housing.drop("total_bedrooms", axis=1) # option 2
+
+median = housing["total_bedrooms"].median() # option 3
+
+housing["total_bedrooms"].fillna(median, inplace=True)
+
+# =============================================================================
+# SimpleImputer class for cleaning data
+# =============================================================================
+from sklearn.impute import SimpleImputer
+imputer = SimpleImputer(strategy="median")
+housing_num = housing.select_dtypes(include=[np.number])
+imputer.fit(housing_num)
+print(imputer.statistics_)
+print(housing_num.median().values)
+# replacing missing data with the learnt median
+X = imputer.transform(housing_num)
