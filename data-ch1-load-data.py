@@ -32,7 +32,7 @@ plt.show()
 from sklearn.model_selection import train_test_split
 train_set, test_set = train_test_split(housing, test_size=0.2, random_state=42)
 # =============================================================================
-# 
+# experiment with data stratum
 # =============================================================================
 import numpy as np
 housing["income_cat"] = pd.cut(housing["median_income"],
@@ -73,8 +73,9 @@ strat_train_set, strat_test_set = strat_splits[0]
 
 for set_ in (strat_train_set, strat_test_set):
     set_.drop("income_cat", axis=1, inplace=True)
+
 #%% =============================================================================
-#l VISUALIZING THE DATA
+# VISUALIZING THE DATA
 # =============================================================================
 
 # make a copy of the original data
@@ -96,7 +97,7 @@ plt.show()
 
 
 #%% =============================================================================
-# # extra code – this cell generates the first figure in the chapter
+# extra code – this cell generates the first figure in the chapter
 # =============================================================================
 
 # Download the California image
@@ -202,11 +203,108 @@ housing["total_bedrooms"].fillna(median, inplace=True)
 # =============================================================================
 # SimpleImputer class for cleaning data
 # =============================================================================
+
 from sklearn.impute import SimpleImputer
-imputer = SimpleImputer(strategy="median")
-housing_num = housing.select_dtypes(include=[np.number])
+
+imputer     = SimpleImputer(strategy="median")
+housing_num = housing.select_dtypes(include=[np.number]) #only numeric data
+
 imputer.fit(housing_num)
+
 print(imputer.statistics_)
 print(housing_num.median().values)
+
 # replacing missing data with the learnt median
 X = imputer.transform(housing_num)
+
+# the output of imputer.transform(housing_num) is a NumPy array: X has neither 
+# column names nor index. Luckily, it’s not too hard to wrap X in a DataFrame and
+# recover the column names and index from housing_num:
+
+housing_tr = pd.DataFrame(X, columns=housing_num.columns, index=housing_num.index)
+
+#%% =============================================================================
+# Handling Text and Categorical Attributes
+# =============================================================================
+
+# first you need to convert data to numerical values
+
+housing_cat = housing[["ocean_proximity"]]
+print( housing_cat.head(8) )
+
+from sklearn.preprocessing import OrdinalEncoder
+
+ordinal_encoder     = OrdinalEncoder()
+housing_cat_encoded = ordinal_encoder.fit_transform(housing_cat)
+
+# You can get the list of categories using the categories_ instance variable.
+
+print( ordinal_encoder.categories_)
+
+
+# Scikit-Learn provides a
+# OneHotEncoder class to convert categorical values into one-hot vectors:
+
+from sklearn.preprocessing import OneHotEncoder
+cat_encoder      = OneHotEncoder()
+housing_cat_1hot = cat_encoder.fit_transform(housing_cat)
+
+print(housing_cat_1hot.toarray())
+
+# =============================================================================
+# Feature Scaling and Transformation
+# https://www.analyticsvidhya.com/blog/2021/04/difference-between-fit-transform-fit_transform-methods-in-scikit-learn-with-python-code/
+# =============================================================================
+# Scale data between -1 & +1, MinMax method
+# his is performed by subtracting the min value and dividing by the dif‐
+# ference between the min and the max. 
+
+from sklearn.preprocessing import MinMaxScaler
+min_max_scaler = MinMaxScaler(feature_range=(-1, 1))
+housing_num_min_max_scaled = min_max_scaler.fit_transform(housing_num)
+
+# Standardization is different: first it subtracts the mean value 
+# (so standardized values have a zero mean), then it divides the result by the 
+# standard deviation (so standardized values have a standard deviation equal to 1). 
+# standardization is much less affected by outliers
+
+from sklearn.preprocessing import StandardScaler
+std_scaler = StandardScaler()
+housing_num_std_scaled = std_scaler.fit_transform(housing_num)
+
+# =============================================================================
+# Another approach to transforming multimodal distributions is to add a feature
+# for each of the modes (at least the main ones), representing the similarity 
+# between the housing median age and that particular mode
+# =============================================================================
+from sklearn.metrics.pairwise import rbf_kernel
+age_simil_35 = rbf_kernel(housing[["housing_median_age"]], [[35]], gamma=0.1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
