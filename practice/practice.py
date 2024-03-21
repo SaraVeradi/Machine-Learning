@@ -23,6 +23,8 @@ reuter = pd.read_csv( data_adress + "reuters.csv")
 bbc    = pd.read_csv( data_adress + "bbc.csv")
 cnn    = pd.read_csv( data_adress + "cnn.csv")
 
+
+# df = pd.DataFrame( [cnn["likes"], cnn["comments"],cnn["shares"]], columns=cnn.columns[1:])
 # %%===========================================================================
 #  Take a look at data   
 # =============================================================================
